@@ -1,0 +1,55 @@
+﻿@model IEnumerable<GestionBoutiqueElevate.Models.Client>
+@{
+    ViewData["Title"] = "Clients";
+    var q = (string)(ViewData["Query"] ?? "");
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0">Clients</h2>
+    <a class="btn btn-primary" asp-action="Create">+ Nouveau client</a>
+</div>
+
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input name="q" class="form-control" placeholder="Rechercher par nom, email, téléphone, ville..."
+               value="@q" />
+        <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+        @if (!string.IsNullOrWhiteSpace(q))
+        {
+            <a class="btn btn-outline-danger" href="@Url.Action("Index","Clients")">Effacer</a>
+        }
+    </div>
+</form>
+
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Téléphone</th>
+            <th>Ville</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.Id</td>
+                <td>@c.FullName</td>
+                <td>@c.Email</td>
+                <td>@c.Phone</td>
+                <td>@c.City</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@c.Id">Détails</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Aucun client trouvé.</div>
+}

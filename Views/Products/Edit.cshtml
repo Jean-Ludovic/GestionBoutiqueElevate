@@ -1,0 +1,16 @@
+﻿@model GestionBoutiqueElevate.Models.Product
+@{
+    ViewData["Title"] = "Éditer produit";
+}
+<h2>Éditer produit</h2>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <partial name="_Form" />
+    <div class="mt-3">
+        <button class="btn btn-primary" type="submit">Mettre à jour</button>
+        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+    </div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

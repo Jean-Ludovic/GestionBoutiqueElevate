@@ -1,0 +1,11 @@
+﻿@model GestionBoutiqueElevate.Models.Product
+@{
+	ViewData["Title"] = "Supprimer produit";
+}
+<h2>Supprimer @Model.Name ?</h2>
+<p>Cette action est irréversible.</p>
+<form asp-action="Delete" method="post">
+	<input type="hidden" asp-for="Id" />
+	<button class="btn btn-danger" type="submit">Supprimer</button>
+	<a class="btn btn-secondary" asp-action="Index">Annuler</a>
+</form>

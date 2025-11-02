@@ -1,0 +1,31 @@
+﻿@model GestionBoutiqueElevate.Models.Product
+<div class="row g-3">
+    <div class="col-md-4">
+        <label class="form-label">SKU</label>
+        <input asp-for="Sku" class="form-control" />
+    </div>
+    <div class="col-md-8">
+        <label class="form-label">Nom</label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Catégorie</label>
+        <input asp-for="Category" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Prix</label>
+        <input asp-for="Price" class="form-control" type="number" step="0.01" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Stock</label>
+        <input asp-for="Stock" class="form-control" type="number" />
+    </div>
+    <div class="col-12">
+        <label class="form-label">Description</label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="col-12 form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label class="form-check-label" asp-for="IsActive">Actif</label>
+    </div>
+</div>

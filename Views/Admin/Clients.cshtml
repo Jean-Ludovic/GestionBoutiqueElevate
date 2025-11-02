@@ -1,0 +1,105 @@
+﻿@model IEnumerable<GestionBoutiqueElevate.Models.Client>
+@{
+    ViewData["Title"] = "Admin - Clients";
+}
+
+<h2 class="mb-3">Clients & crédits</h2>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Email</th>
+            <th class="text-end">Crédit</th>
+            <th class="text-end">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr data-id="@c.Id">
+                <td>@c.FirstName @c.LastName</td>
+                <td>@c.Email</td>
+                <td class="text-end credit-cell">@c.Credit.ToString("C")</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary btn-edit" data-id="@c.Id" data-name="@c.FirstName @c.LastName" data-credit="@c.Credit">Éditer</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal édition crédit -->
+<div class="modal" tabindex="-1" id="creditModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier le crédit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Client</label>
+                    <input id="mClientName" class="form-control" disabled />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Crédit ($)</label>
+                    <input id="mCredit" class="form-control" type="number" step="0.01" min="0" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Code admin</label>
+                    <input id="mAdminCode" class="form-control" placeholder="ex: AD-01" />
+                </div>
+                <div id="mMsg" class="small text-muted"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button id="mSave" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+          var modalEl = document.getElementById('creditModal');
+          var modal = new bootstrap.Modal(modalEl);
+          var mClientName = document.getElementById('mClientName');
+          var mCredit = document.getElementById('mCredit');
+          var mAdminCode = document.getElementById('mAdminCode');
+          var mMsg = document.getElementById('mMsg');
+          var mSave = document.getElementById('mSave');
+          var currentId = null;
+
+          document.querySelectorAll('.btn-edit').forEach(function(btn){
+            btn.addEventListener('click', function(){
+              currentId = +btn.dataset.id;
+              mClientName.value = btn.dataset.name || '';
+              mCredit.value = btn.dataset.credit || '0';
+              mAdminCode.value = '';
+              mMsg.textContent = '';
+              modal.show();
+            });
+          });
+
+          mSave.addEventListener('click', async function(){
+            var fd = new FormData();
+            fd.append('clientId', currentId);
+            fd.append('amount', mCredit.value || '0');
+            fd.append('adminCode', (mAdminCode.value || '').toUpperCase().trim());
+            const res = await fetch('/Admin/SetClientCredit', { method:'POST', body: fd });
+            if(!res.ok){ mMsg.textContent = 'Erreur: ' + (await res.text()); return; }
+            const data = await res.json();
+            if(data.ok){
+              var row = document.querySelector('tr[data-id="'+currentId+'"] .credit-cell');
+              if(row){
+                const val = Number(data.credit).toLocaleString(undefined,{style:'currency',currency:'USD'});
+                row.textContent = val;
+              }
+              modal.hide();
+            }
+          });
+        });
+    </script>
+}

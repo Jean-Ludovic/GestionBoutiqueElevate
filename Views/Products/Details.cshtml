@@ -1,0 +1,14 @@
+﻿@model GestionBoutiqueElevate.Models.Product
+@{
+	ViewData["Title"] = "Détails produit";
+}
+<h2>@Model.Name</h2>
+<ul class="list-group mb-3">
+	<li class="list-group-item"><strong>SKU:</strong> @Model.Sku</li>
+	<li class="list-group-item"><strong>Catégorie:</strong> @Model.Category</li>
+	<li class="list-group-item"><strong>Prix:</strong> @Model.Price.ToString("C")</li>
+	<li class="list-group-item"><strong>Stock:</strong> @Model.Stock</li>
+	<li class="list-group-item"><strong>Actif:</strong> @(Model.IsActive ? "Oui" : "Non")</li>
+</ul>
+<p>@Model.Description</p>
+<a class="btn btn-secondary" asp-action="Index">← Retour</a>

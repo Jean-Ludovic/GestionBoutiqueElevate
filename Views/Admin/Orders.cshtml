@@ -1,0 +1,33 @@
+﻿@model IEnumerable<GestionBoutiqueElevate.Models.Order>
+@{
+    ViewData["Title"] = "Admin - Commandes";
+}
+<h2 class="mb-3">Historique des commandes</h2>
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Client</th>
+            <th>Employé</th>
+            <th class="text-end">Total</th>
+            <th class="text-end">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var o in Model)
+        {
+            <tr>
+                <td>@o.Id</td>
+                <td>@o.CreatedAt.ToLocalTime().ToString("g")</td>
+                <td>@o.ClientName</td>
+                <td>@o.EmployeeName (@o.EmployeeCode)</td>
+                <td class="text-end">@o.Total.ToString("C")</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">Détails</a>
+                    <a class="btn btn-sm btn-primary" asp-controller="Admin" asp-action="Invoice" asp-route-id="@o.Id">PDF</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

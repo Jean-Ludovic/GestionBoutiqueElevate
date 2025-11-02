@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>fb2dbd3e-bbca-451f-8b7f-09ef8ef9fb1e</UserSecretsId>
+	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="QuestPDF" Version="2025.7.3" />
+	</ItemGroup>
+</Project>

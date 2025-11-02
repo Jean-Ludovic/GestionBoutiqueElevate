@@ -1,0 +1,68 @@
+﻿@model IEnumerable<GestionBoutiqueElevate.Models.Employee>
+@{
+    ViewData["Title"] = "Admin - Employés";
+}
+<h2 class="mb-3">Employés</h2>
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-6">
+                <input id="empName" class="form-control" placeholder="Nom complet" />
+            </div>
+            <div class="col-md-4">
+                <input id="empAdminCode" class="form-control" placeholder="Code admin ex: AD-01" />
+            </div>
+            <div class="col-md-2">
+                <button id="empCreate" class="btn btn-primary w-100">Créer</button>
+            </div>
+        </div>
+        <div id="empMsg" class="small text-muted mt-2"></div>
+    </div>
+</div>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Code</th>
+            <th>Rôle</th>
+        </tr>
+    </thead>
+    <tbody id="empTableBody">
+        @foreach (var e in Model)
+        {
+            <tr>
+                <td>@e.FullName</td>
+                <td>@e.Code</td>
+                <td>@e.Role</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+          var name = document.getElementById('empName');
+          var admin = document.getElementById('empAdminCode');
+          var btn = document.getElementById('empCreate');
+          var msg = document.getElementById('empMsg');
+          var body = document.getElementById('empTableBody');
+
+          btn.addEventListener('click', async function(){
+            var fd = new FormData();
+            fd.append('fullName', (name.value||'').trim());
+            fd.append('adminCode', (admin.value||'').trim().toUpperCase());
+            var r = await fetch('/Admin/CreateEmployee', { method:'POST', body: fd });
+            if(!r.ok){ msg.textContent = 'Erreur: ' + await r.text(); return; }
+            var d = await r.json();
+            if(d.ok){
+              var tr = document.createElement('tr');
+              tr.innerHTML = '<td>'+d.name+'</td><td>'+d.code+'</td><td>Employee</td>';
+              body.prepend(tr);
+              name.value = ''; admin.value = ''; msg.textContent = '';
+            }
+          });
+        });
+    </script>
+}

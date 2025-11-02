@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "Admin";
+}
+<h2 class="mb-4">Tableau de bord</h2>
+<div class="row g-3">
+    <div class="col-md-4">
+        <a class="text-decoration-none" asp-controller="Admin" asp-action="Clients">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fs-5">Clients</div>
+                    <div class="text-muted">Crédits, édition</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a class="text-decoration-none" asp-controller="Admin" asp-action="Employees">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fs-5">Employés</div>
+                    <div class="text-muted">Création, codes</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a class="text-decoration-none" asp-controller="Admin" asp-action="Orders">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fs-5">Commandes</div>
+                    <div class="text-muted">Historique, PDF</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a class="text-decoration-none" asp-controller="Admin" asp-action="Products">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="fs-5">Produits</div>
+                    <div class="text-muted">Créer, éditer, stock</div>
+                </div>
+            </div>
+        </a>
+
+    </div>
+</div>

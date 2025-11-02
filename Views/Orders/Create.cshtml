@@ -1,0 +1,373 @@
+﻿@model GestionBoutiqueElevate.Models.Order
+@{
+    ViewData["Title"] = "Créer commande";
+}
+
+<h2>Créer une commande</h2>
+@Html.AntiForgeryToken()
+
+<div class="card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <div class="text-muted">Client</div>
+            <div id="selectedClientName" class="fw-bold">STORE CUSTOMER</div>
+            <div id="selectedClientId" class="d-none"></div>
+        </div>
+        <button id="btnChangeClient" type="button" class="btn btn-outline-primary">Changer client</button>
+    </div>
+</div>
+
+<!-- Modal clients -->
+<div id="clientModal" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rechercher un client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input id="clientSearch" class="form-control mb-2" placeholder="Nom, email, téléphone, ville..." />
+                <ul id="clientResults" class="list-group"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-8">
+                <input id="productSearch" class="form-control" placeholder="Rechercher produit (nom, SKU, catégorie)..." />
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="text-muted">Ajouter un article</span>
+            </div>
+        </div>
+        <div id="productResults" class="list-group mt-2"></div>
+    </div>
+</div>
+
+<table class="table table-hover align-middle" id="itemsTable">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Produit</th>
+            <th class="text-end">Prix</th>
+            <th class="text-end">Qté</th>
+            <th class="text-end">Total</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<div class="row g-3 mt-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="input-group">
+                    <input id="couponInput" class="form-control" placeholder="Code coupon (ex: PROMO10, SAVE5)" />
+                    <button id="applyCoupon" class="btn btn-outline-secondary" type="button">Appliquer</button>
+                </div>
+                <div id="couponMsg" class="text-muted small mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between"><span>Sous-total</span><span id="subtotalText">$0.00</span></div>
+                <div class="d-flex justify-content-between"><span>Remise</span><span id="discountText">$0.00</span></div>
+                <div class="d-flex justify-content-between"><span>Taxes (<span id="taxRateText"></span>)</span><span id="taxText">$0.00</span></div>
+                <hr />
+                <div class="mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="pm" id="pmCash" value="Cash" checked>
+                        <label class="form-check-label" for="pmCash">Paiement cash</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="pm" id="pmCredit" value="Credit">
+                        <label class="form-check-label" for="pmCredit">Paiement par crédit</label>
+                    </div>
+                    <div class="small text-muted mt-1" id="clientCreditHint"></div>
+                </div>
+
+                <div class="input-group mb-2">
+                    <span class="input-group-text">Code employé</span>
+                    <input id="employeeCode" class="form-control" placeholder="ex: AD-01">
+                    <button id="btnCheckEmployee" class="btn btn-outline-secondary" type="button">Vérifier</button>
+                </div>
+                <div id="employeeInfo" class="small text-muted"></div>
+
+                <div class="d-flex justify-content-between fs-5 fw-bold"><span>Total</span><span id="totalText">$0.00</span></div>
+                <button id="saveOrder" class="btn btn-primary w-100 mt-3" type="button">Enregistrer la commande</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var token = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+            var taxRate = parseFloat('@(Model.TaxRate.ToString(System.Globalization.CultureInfo.InvariantCulture))');
+
+            function el(id) { return document.getElementById(id); }
+
+            var selectedClientName = el('selectedClientName');
+            var btnChangeClient = el('btnChangeClient');
+            var clientModalEl = el('clientModal');
+            var clientSearch = el('clientSearch');
+            var clientResults = el('clientResults');
+            var productSearch = el('productSearch');
+            var productResults = el('productResults');
+            var itemsTable = el('itemsTable');
+            var couponInput = el('couponInput');
+            var applyCoupon = el('applyCoupon');
+            var couponMsg = el('couponMsg');
+            var subtotalText = el('subtotalText');
+            var discountText = el('discountText');
+            var taxText = el('taxText');
+            var totalText = el('totalText');
+            var saveOrder = el('saveOrder');
+            var taxRateText = el('taxRateText');
+
+            if (taxRateText) taxRateText.innerText = (taxRate * 100).toFixed(0) + "%";
+
+            var items = [];
+            var client = { id: null, name: "STORE CUSTOMER" };
+            var discount = 0;
+            var couponCode = null;
+
+            function fmt(v) { return (v || 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' }); }
+            function calcSubtotal() { return items.reduce(function (s, i) { return s + i.unitPrice * i.quantity; }, 0); }
+
+            function renderTotals() {
+                var st = +(calcSubtotal().toFixed(2));
+                var tx = +(((st - discount) * taxRate)).toFixed(2);
+                var tot = Math.max(0, +(st - discount + tx).toFixed(2));
+                if (subtotalText) subtotalText.innerText = fmt(st);
+                if (discountText) discountText.innerText = fmt(discount);
+                if (taxText) taxText.innerText = fmt(tx);
+                if (totalText) totalText.innerText = fmt(tot);
+            }
+
+            function refreshTable() {
+                var tbody = itemsTable ? itemsTable.querySelector('tbody') : null;
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                items.forEach(function (it, idx) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + it.sku + '</td>' +
+                        '<td>' + it.name + '</td>' +
+                        '<td class="text-end">' + fmt(it.unitPrice) + '</td>' +
+                        '<td class="text-end"><input type="number" min="1" class="form-control form-control-sm text-end qtyInp" data-idx="' + idx + '" value="' + it.quantity + '"></td>' +
+                        '<td class="text-end">' + fmt(it.unitPrice * it.quantity) + '</td>' +
+                        '<td class="text-end"><button class="btn btn-sm btn-outline-danger rmBtn" data-idx="' + idx + '">X</button></td>';
+                    tbody.appendChild(tr);
+                });
+                renderTotals();
+            }
+
+            var clientModal = null;
+            function openModal() {
+                if (!clientModalEl) return;
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    if (!clientModal) clientModal = new bootstrap.Modal(clientModalEl);
+                    clientModal.show();
+                } else {
+                    clientModalEl.classList.add('show');
+                    clientModalEl.style.display = 'block';
+                }
+            }
+            function closeModal() {
+                if (!clientModalEl) return;
+                if (clientModal) { clientModal.hide(); }
+                else { clientModalEl.classList.remove('show'); clientModalEl.style.display = ''; }
+            }
+
+            if (btnChangeClient) {
+                btnChangeClient.addEventListener('click', function () {
+                    if (clientSearch) clientSearch.value = '';
+                    if (clientResults) clientResults.innerHTML = '';
+                    openModal();
+                });
+            }
+
+            if (clientSearch) {
+                clientSearch.addEventListener('input', function (e) {
+                    var q = e.target.value || '';
+                    fetch('/Orders/SearchClients?q=' + encodeURIComponent(q))
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (!clientResults) return;
+                            clientResults.innerHTML = '';
+                            data.forEach(function (c) {
+                                var li = document.createElement('li');
+                                li.className = 'list-group-item list-group-item-action';
+                                li.textContent = `${c.name} — ${c.email ?? ''} — Crédit: $${c.credit?.toFixed(2) ?? 0}`;
+
+                                li.onclick = function () {
+                                    client = { id: c.id, name: c.name };
+                                    if (selectedClientName) selectedClientName.innerText = client.name;
+                                    closeModal();
+                                };
+                                clientResults.appendChild(li);
+                            });
+                        }).catch(function () { });
+                });
+            }
+
+            var searchTimeout = null;
+            if (productSearch) {
+                productSearch.addEventListener('input', function (e) {
+                    clearTimeout(searchTimeout);
+                    var q = e.target.value || '';
+                    searchTimeout = setTimeout(function () {
+                        if (!productResults) { return; }
+                        productResults.innerHTML = '';
+                        if (q.length < 2) return;
+                        fetch('/Orders/SearchProducts?q=' + encodeURIComponent(q))
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                data.forEach(function (p) {
+                                    var a = document.createElement('a');
+                                    a.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                                    a.innerHTML = '<div><div class="fw-bold">' + p.name + '</div><div class="small text-muted">' + p.sku + ' — Stock: ' + p.stock + '</div></div><div>' + fmt(p.price) + '</div>';
+                                    a.onclick = function () { addProductPrompt(p); };
+                                    productResults.appendChild(a);
+                                });
+                            }).catch(function () { });
+                    }, 250);
+                });
+            }
+
+            function addProductPrompt(p) {
+                var qty = parseInt(prompt('Quantité pour "' + p.name + '" ? (Stock dispo: ' + p.stock + ')', '1'), 10);
+                if (isNaN(qty) || qty <= 0) return;
+                if (qty > p.stock) { alert('Stock insuffisant. Disponible: ' + p.stock); return; }
+                var ex = items.find(function (i) { return i.productId === p.id; });
+                if (ex) {
+                    var newQty = ex.quantity + qty;
+                    if (newQty > p.stock) { alert('Stock insuffisant. Disponible: ' + p.stock); return; }
+                    ex.quantity = newQty;
+                } else {
+                    items.push({ productId: p.id, sku: p.sku, name: p.name, unitPrice: p.price, quantity: qty });
+                }
+                if (productResults) productResults.innerHTML = '';
+                if (productSearch) productSearch.value = '';
+                refreshTable();
+            }
+
+            if (itemsTable) {
+                itemsTable.addEventListener('input', function (e) {
+                    if (e.target.classList.contains('qtyInp')) {
+                        var idx = +e.target.dataset.idx; var v = +e.target.value;
+                        if (!isFinite(v) || v <= 0) { e.target.value = items[idx].quantity; return; }
+                        items[idx].quantity = v;
+                        refreshTable();
+                    }
+                });
+                itemsTable.addEventListener('click', function (e) {
+                    if (e.target.classList.contains('rmBtn')) {
+                        var idx = +e.target.dataset.idx;
+                        items.splice(idx, 1);
+                        refreshTable();
+                    }
+                });
+            }
+
+            if (applyCoupon) {
+                applyCoupon.addEventListener('click', function () {
+                    var code = (couponInput ? couponInput.value : '').trim();
+                    if (!code) { if (couponMsg) couponMsg.innerText = 'Entrez un code.'; return; }
+                    var fd = new FormData();
+                    fd.append('code', code);
+                    fd.append('subtotal', calcSubtotal());
+                    fetch('/Orders/ValidateCoupon', { method: 'POST', body: fd })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (!data.ok) { discount = 0; couponCode = null; if (couponMsg) couponMsg.innerText = data.message; }
+                            else { discount = data.discount; couponCode = code; if (couponMsg) couponMsg.innerText = 'Coupon appliqué: -' + fmt(discount); }
+                            renderTotals();
+                        }).catch(function () { });
+                });
+            }
+
+            if (saveOrder) {
+                saveOrder.addEventListener('click', function () {
+                    if (items.length === 0) { alert('Ajoutez au moins un article.'); return; }
+                    fetch('/Orders/CreateOrder', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                        body: JSON.stringify({ clientId: client.id, clientName: client.name, items: items, couponCode: couponCode, discountAmount: discount, taxRate: taxRate })
+                    }).then(function (r) {
+                        if (!r.ok) return r.text().then(function (t) { throw new Error(t); });
+                        return r.json();
+                    }).then(function (data) {
+                        if (data.ok) window.location.href = '/Orders/Details/' + data.id;
+                    }).catch(function (err) { alert('Erreur: ' + err.message); });
+                });
+            }
+
+            renderTotals();
+            var pmCash = document.getElementById('pmCash');
+            var pmCredit = document.getElementById('pmCredit');
+            var clientCreditHint = document.getElementById('clientCreditHint');
+            var employeeCode = document.getElementById('employeeCode');
+            var btnCheckEmployee = document.getElementById('btnCheckEmployee');
+            var employeeInfo = document.getElementById('employeeInfo');
+
+            btnCheckEmployee.addEventListener('click', async function () {
+                var code = (employeeCode.value || '').trim().toUpperCase();
+                var fd = new FormData();
+                fd.append('code', code);
+                var r = await fetch('/Orders/ValidateEmployee', { method: 'POST', body: fd });
+                var d = await r.json();
+                if (!d.ok) { employeeInfo.innerText = d.message; employeeInfo.classList.remove('text-success'); employeeInfo.classList.add('text-danger'); }
+                else { employeeInfo.innerText = d.name + ' (' + d.code + ')'; employeeInfo.classList.remove('text-danger'); employeeInfo.classList.add('text-success'); }
+            });
+
+            function refreshClientCreditHint() {
+                if (pmCredit.checked && client.id) {
+                    fetch('/Orders/SearchClients?q=' + encodeURIComponent(client.name))
+                        .then(r => r.json()).then(list => {
+                            var match = list.find(x => x.id === client.id);
+                            if (!match) { clientCreditHint.innerText = ''; return; }
+                            // si tu ajoutes le crédit dans le JSON SearchClients, affiche-le ici. Sinon laisse vide.
+                        });
+                } else { clientCreditHint.innerText = ''; }
+            }
+            pmCredit.addEventListener('change', refreshClientCreditHint);
+            pmCash.addEventListener('change', refreshClientCreditHint);
+
+            // remplace le save pour inclure le mode et le code employé :
+            saveOrder.addEventListener('click', async () => {
+                if (items.length === 0) { alert('Ajoutez au moins un article.'); return; }
+                var code = (employeeCode.value || '').trim().toUpperCase();
+                if (!code) { alert('Code employé requis.'); return; }
+
+                const res = await fetch('/Orders/CreateOrder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify({
+                        clientId: client.id,
+                        clientName: client.name,
+                        items,
+                        couponCode,
+                        discountAmount: discount,
+                        taxRate,
+                        employeeCode: code,
+                        paymentMethod: pmCredit.checked ? 1 : 0   // 0=Cash, 1=Credit
+                    })
+                });
+                if (!res.ok) { alert('Erreur: ' + await res.text()); return; }
+                const data = await res.json();
+                if (data.ok) window.location.href = `/Orders/Details/${data.id}`;
+            });
+
+        });
+    </script>
+}

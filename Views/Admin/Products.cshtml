@@ -1,0 +1,185 @@
+﻿@model IEnumerable<GestionBoutiqueElevate.Models.Product>
+@{
+    ViewData["Title"] = "Admin - Produits";
+}
+<h2 class="mb-3">Produits</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-3"><input id="pName" class="form-control" placeholder="Nom" /></div>
+            <div class="col-md-2"><input id="pSku" class="form-control" placeholder="SKU" /></div>
+            <div class="col-md-2"><input id="pPrice" class="form-control" type="number" step="0.01" min="0" placeholder="Prix" /></div>
+            <div class="col-md-2"><input id="pStock" class="form-control" type="number" step="1" min="0" placeholder="Stock" /></div>
+            <div class="col-md-2"><input id="pAdmin" class="form-control" placeholder="Code admin" /></div>
+            <div class="col-md-1"><button id="pCreate" class="btn btn-primary w-100">Ajouter</button></div>
+        </div>
+        <div id="pMsg" class="small text-muted mt-2"></div>
+    </div>
+</div>
+
+<table class="table table-striped align-middle" id="pTable">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>SKU</th>
+            <th class="text-end">Prix</th>
+            <th class="text-end">Stock</th>
+            <th class="text-end">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr data-id="@p.Id">
+                <td class="p-name">@p.Name</td>
+                <td class="p-sku">@p.Sku</td>
+                <td class="p-price text-end">@p.Price.ToString("C")</td>
+                <td class="p-stock text-end">@p.Stock</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-secondary btn-edit" data-id="@p.Id">Éditer</button>
+                    <button class="btn btn-sm btn-outline-warning btn-stock" data-id="@p.Id">Stock ±</button>
+                    <button class="btn btn-sm btn-outline-danger btn-del" data-id="@p.Id">Supprimer</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="modal" tabindex="-1" id="pEditModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Éditer produit</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="eId" />
+                <div class="mb-2"><label class="form-label">Nom</label><input id="eName" class="form-control" /></div>
+                <div class="mb-2"><label class="form-label">SKU</label><input id="eSku" class="form-control" /></div>
+                <div class="mb-2"><label class="form-label">Prix</label><input id="ePrice" class="form-control" type="number" step="0.01" min="0" /></div>
+                <div class="mb-2"><label class="form-label">Code admin</label><input id="eAdmin" class="form-control" placeholder="AD-01" /></div>
+                <div id="eMsg" class="small text-muted"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button id="eSave" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+          var pName = document.getElementById('pName');
+          var pSku = document.getElementById('pSku');
+          var pPrice = document.getElementById('pPrice');
+          var pStock = document.getElementById('pStock');
+          var pAdmin = document.getElementById('pAdmin');
+          var pCreate = document.getElementById('pCreate');
+          var pMsg = document.getElementById('pMsg');
+          var table = document.getElementById('pTable').querySelector('tbody');
+
+          pCreate.addEventListener('click', async function(){
+            var fd = new FormData();
+            fd.append('name', (pName.value||'').trim());
+            fd.append('sku', (pSku.value||'').trim());
+            fd.append('price', pPrice.value||'0');
+            fd.append('stock', pStock.value||'0');
+            fd.append('adminCode', (pAdmin.value||'').trim().toUpperCase());
+            var r = await fetch('/Admin/CreateProduct', { method:'POST', body: fd });
+            if(!r.ok){ pMsg.textContent = 'Erreur: ' + await r.text(); return; }
+            var d = await r.json();
+            if(d.ok){
+              var tr = document.createElement('tr');
+              tr.setAttribute('data-id', d.id);
+              tr.innerHTML =
+                '<td class="p-name">'+d.name+'</td>' +
+                '<td class="p-sku">'+d.sku+'</td>' +
+                '<td class="p-price text-end">'+Number(d.price).toLocaleString(undefined,{style:"currency",currency:"USD"})+'</td>' +
+                '<td class="p-stock text-end">'+d.stock+'</td>' +
+                '<td class="text-end">' +
+                  '<button class="btn btn-sm btn-outline-secondary btn-edit" data-id="'+d.id+'">Éditer</button> ' +
+                  '<button class="btn btn-sm btn-outline-warning btn-stock" data-id="'+d.id+'">Stock ±</button> ' +
+                  '<button class="btn btn-sm btn-outline-danger btn-del" data-id="'+d.id+'">Supprimer</button>' +
+                '</td>';
+              table.prepend(tr);
+              pName.value=''; pSku.value=''; pPrice.value=''; pStock.value=''; pMsg.textContent='';
+            }
+          });
+
+          var modalEl = document.getElementById('pEditModal');
+          var modal = new bootstrap.Modal(modalEl);
+          var eId = document.getElementById('eId');
+          var eName = document.getElementById('eName');
+          var eSku = document.getElementById('eSku');
+          var ePrice = document.getElementById('ePrice');
+          var eAdmin = document.getElementById('eAdmin');
+          var eMsg = document.getElementById('eMsg');
+          var eSave = document.getElementById('eSave');
+
+          table.addEventListener('click', async function(e){
+            var btn = e.target.closest('button'); if(!btn) return;
+            var id = +btn.dataset.id;
+            var row = table.querySelector('tr[data-id="'+id+'"]');
+
+            if(btn.classList.contains('btn-edit')){
+              eId.value = id;
+              eName.value = row.querySelector('.p-name').textContent;
+              eSku.value = row.querySelector('.p-sku').textContent;
+              var priceText = row.querySelector('.p-price').textContent;
+              ePrice.value = (Number(priceText.replace(/[^0-9.,-]/g,'')) || 0).toString().replace(',', '.');
+              eAdmin.value = '';
+              eMsg.textContent = '';
+              modal.show();
+              return;
+            }
+
+            if(btn.classList.contains('btn-stock')){
+              var delta = parseInt(prompt('Ajustement de stock (ex: 5 ou -3):','1'), 10);
+              if(!Number.isFinite(delta)) return;
+              var admin = prompt('Code admin:','AD-01'); if(!admin) return;
+              var fd = new FormData();
+              fd.append('id', id);
+              fd.append('delta', delta);
+              fd.append('adminCode', admin.trim().toUpperCase());
+              var r = await fetch('/Admin/AdjustStock', { method:'POST', body: fd });
+              if(!r.ok){ alert('Erreur: ' + await r.text()); return; }
+              var d = await r.json();
+              if(d.ok){ row.querySelector('.p-stock').textContent = d.stock; }
+              return;
+            }
+
+            if(btn.classList.contains('btn-del')){
+              if(!confirm('Supprimer ce produit ?')) return;
+              var admin = prompt('Code admin:','AD-01'); if(!admin) return;
+              var fd = new FormData();
+              fd.append('id', id);
+              fd.append('adminCode', admin.trim().toUpperCase());
+              var r = await fetch('/Admin/DeleteProduct', { method:'POST', body: fd });
+              if(!r.ok){ alert('Erreur: ' + await r.text()); return; }
+              var d = await r.json();
+              if(d.ok){ row.remove(); }
+              return;
+            }
+          });
+
+          eSave.addEventListener('click', async function(){
+            var fd = new FormData();
+            fd.append('id', eId.value);
+            fd.append('name', (eName.value||'').trim());
+            fd.append('sku', (eSku.value||'').trim());
+            fd.append('price', ePrice.value||'0');
+            fd.append('adminCode', (eAdmin.value||'').trim().toUpperCase());
+            var r = await fetch('/Admin/UpdateProduct', { method:'POST', body: fd });
+            if(!r.ok){ eMsg.textContent = 'Erreur: ' + await r.text(); return; }
+            var d = await r.json();
+            if(d.ok){
+              var row = table.querySelector('tr[data-id="'+d.id+'"]');
+              row.querySelector('.p-name').textContent = d.name;
+              row.querySelector('.p-sku').textContent = d.sku;
+              row.querySelector('.p-price').textContent = Number(d.price).toLocaleString(undefined,{style:"currency",currency:"USD"});
+              modal.hide();
+            }
+          });
+        });
+    </script>
+}
