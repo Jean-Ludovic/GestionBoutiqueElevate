@@ -1,0 +1,117 @@
+﻿:root {
+    --bg: #f5f8ff; /* fond principal clair */
+    --fg: #0a1a3c; /* texte bleu foncé */
+    --accent: #0078ff; /* bleu principal */
+    --accent-soft: #a8d3ff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    overflow: hidden;
+}
+
+#splash {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    display: grid;
+    place-items: center;
+}
+
+/* Dégradé de fond bleu doux */
+.bg-gradient {
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(60vmax 60vmax at 20% 20%, rgba(0,120,255,0.15), transparent 60%), radial-gradient(50vmax 50vmax at 80% 30%, rgba(255,255,255,0.25), transparent 60%), radial-gradient(40vmax 40vmax at 50% 80%, rgba(0,120,255,0.10), transparent 60%), linear-gradient(180deg, #cfe6ff 0%, #e9f3ff 100%);
+    filter: blur(60px) saturate(120%);
+    animation: drift 16s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+    0% {
+        transform: translate3d(-2%, -1%, 0) scale(1.02);
+    }
+
+    100% {
+        transform: translate3d(2%, 1%, 0) scale(1.04);
+    }
+}
+
+/* Logo / Lottie centré */
+.logo-wrap {
+    position: relative;
+    width: min(60vw, 720px);
+    height: min(22vw, 260px);
+    display: grid;
+    place-items: center;
+}
+
+#lottie {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 10px 25px rgba(0,120,255,0.3));
+}
+
+/* Texte fallback si Lottie ne charge pas */
+.logo-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    letter-spacing: .5px;
+    font-size: clamp(28px, 6vw, 64px);
+    text-transform: uppercase;
+    color: var(--fg);
+    opacity: .95;
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+    .logo-fallback span {
+        color: var(--accent);
+    }
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.98);
+        opacity: .85;
+    }
+
+    100% {
+        transform: scale(1.00);
+        opacity: 1;
+    }
+}
+
+/* Bouton Passer */
+.skip {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    background: rgba(255,255,255,0.8);
+    color: var(--accent);
+    border: 1px solid rgba(0,120,255,0.25);
+    padding: 10px 14px;
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all .2s ease;
+}
+
+    .skip:hover {
+        background: var(--accent);
+        color: #fff;
+        transform: translateY(-2px);
+    }

@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Envoyer un mail";
+}
+
+<div class="container py-5">
+    <h2 class="mb-4 text-center">Envoyer un mail</h2>
+
+    <form>
+        <div class="mb-3">
+            <label class="form-label">Destinataire</label>
+            <input type="email" class="form-control" placeholder="exemple@client.com">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Objet</label>
+            <input type="text" class="form-control" placeholder="Objet du message">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" rows="5" placeholder="Écris ton message ici..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Envoyer</button>
+    </form>
+</div>

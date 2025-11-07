@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using GestionBoutiqueElevate.Models;
 using GestionBoutiqueElevate.Services;
+using System.Threading.Tasks;
 
 namespace GestionBoutiqueElevate.Controllers
 {
@@ -13,24 +13,59 @@ namespace GestionBoutiqueElevate.Controllers
         private readonly IOrderRepository _orders;
         private readonly IProductRepository _products;
         private readonly IInvoiceService _invoice;
+        private readonly IAnnouncementRepository _announcements;
+        private readonly ILogger<AdminController> _logger;
 
+        // === UN SEUL CONSTRUCTEUR ===
         public AdminController(
             IClientRepository clients,
             IEmployeeRepository employees,
             IOrderRepository orders,
             IProductRepository products,
-            IInvoiceService invoice)
+            IInvoiceService invoice,
+            IAnnouncementRepository announcements,
+            ILogger<AdminController> logger)
         {
             _clients = clients;
             _employees = employees;
             _orders = orders;
             _products = products;
             _invoice = invoice;
+            _announcements = announcements;
+            _logger = logger;
         }
 
+        // ------- Annonces / Promotions -------
         [HttpGet]
-        public IActionResult Index() => View();
+        public async Task<IActionResult> Announcements()
+        {
+            var all = await _announcements.GetAllAsync();
+            return View(all);
+        }
 
+        [HttpPost]
+        public async Task<IActionResult> CreateAnnouncement([FromForm] string title, [FromForm] string message, [FromForm] string adminCode)
+        {
+            var adm = await _employees.GetByCodeAsync((adminCode ?? "").Trim().ToUpperInvariant());
+            if (adm == null || adm.Role != EmployeeRole.Admin) return BadRequest("Code admin invalide.");
+            if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(message)) return BadRequest("Champs requis.");
+            var a = await _announcements.AddAsync(new Announcement { Title = title.Trim(), Message = message.Trim(), IsActive = true });
+            return Json(new { ok = true, id = a.Id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleAnnouncement([FromForm] int id, [FromForm] string adminCode)
+        {
+            var adm = await _employees.GetByCodeAsync((adminCode ?? "").Trim().ToUpperInvariant());
+            if (adm == null || adm.Role != EmployeeRole.Admin) return BadRequest("Code admin invalide.");
+            await _announcements.ToggleActiveAsync(id);
+            return Json(new { ok = true });
+        }
+
+        // ------- Dashboard -------
+        [HttpGet] public IActionResult Index() => View();
+
+        // ------- Clients -------
         [HttpGet]
         public async Task<IActionResult> Clients()
         {
@@ -50,6 +85,7 @@ namespace GestionBoutiqueElevate.Controllers
             return Json(new { ok = true, clientId = cl.Id, credit = cl.Credit });
         }
 
+        // ------- Employés -------
         [HttpGet]
         public async Task<IActionResult> Employees()
         {
@@ -67,6 +103,7 @@ namespace GestionBoutiqueElevate.Controllers
             return Json(new { ok = true, id = e.Id, code = e.Code, name = e.FullName });
         }
 
+        // ------- Commandes / Factures -------
         [HttpGet]
         public async Task<IActionResult> Orders()
         {
@@ -82,6 +119,7 @@ namespace GestionBoutiqueElevate.Controllers
             return File(pdf, "application/pdf", $"invoice_{id}.pdf");
         }
 
+        // ------- Produits -------
         [HttpGet]
         public async Task<IActionResult> Products()
         {

@@ -1,0 +1,77 @@
+﻿@{
+    Layout = null; // pas de navbar/layout
+    var nextUrl = Url.Action("Dashboard", "Home"); // destination après l’animation
+}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Intro</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/splash.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="splash">
+        <div class="bg-gradient"></div>
+
+        <div class="logo-wrap">
+            <div id="lottie" aria-label="intro animation"></div>
+            <div id="fallbackLogo" class="logo-fallback">Gestion<span>Boutique</span>Elevate</div>
+        </div>
+
+        <button id="skip" class="skip" type="button">Passer</button>
+
+        <audio id="whoosh" preload="auto">
+            <source src="~/media/whoosh.mp3" type="audio/mpeg" />
+        </audio>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"
+            integrity="sha512-gwq7yL0V3ycK9qDWzXoK3q3p8HOBxBjOouJ6u1FY7N9X5W1+5hJZrJz6z2tW1rxo9XdsJmcqYj5bWzJQ1c3kVg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        (function () {
+            const redirectTo = '@nextUrl';
+            const MAX_WAIT_MS = 3200; // timeout de sécurité
+            const whoosh = document.getElementById('whoosh');
+            let done = false;
+
+            function go() {
+                if (done) return;
+                done = true;
+                window.location.href = redirectTo;
+            }
+
+            try {
+                const anim = lottie.loadAnimation({
+                    container: document.getElementById('lottie'),
+                    renderer: 'svg',
+                    loop: false,
+                    autoplay: true,
+                    // mets ton fichier ici: wwwroot/animations/intro.json
+                    path: '/animations/intro.json'
+                });
+
+                anim.addEventListener('DOMLoaded', () => {
+                    const fb = document.getElementById('fallbackLogo');
+                    if (fb) fb.style.opacity = '0';
+                    try { whoosh.play().catch(() => {}); } catch {}
+                });
+
+                anim.addEventListener('complete', () => setTimeout(go, 200));
+            } catch {
+                setTimeout(go, MAX_WAIT_MS);
+            }
+
+            document.getElementById('skip').addEventListener('click', go);
+            setTimeout(go, MAX_WAIT_MS + 500); // sécurité
+        })();
+    </script>
+</body>
+</html>

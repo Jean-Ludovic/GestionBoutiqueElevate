@@ -1,0 +1,79 @@
+﻿@model IEnumerable<GestionBoutiqueElevate.Models.Announcement>
+@{
+    ViewData["Title"] = "Admin - Promotions";
+}
+<h2 class="mb-3">Promotions & messages</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-4"><input id="aTitle" class="form-control" placeholder="Titre" /></div>
+            <div class="col-md-6"><input id="aMsg" class="form-control" placeholder="Message" /></div>
+            <div class="col-md-2"><input id="aAdmin" class="form-control" placeholder="Code admin" /></div>
+        </div>
+        <div class="mt-2 text-end">
+            <button id="aCreate" class="btn btn-primary">Publier</button>
+        </div>
+        <div id="aInfo" class="small text-muted mt-2"></div>
+    </div>
+</div>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Message</th>
+            <th>Date</th>
+            <th>Actif</th>
+            <th class="text-end">Action</th>
+        </tr>
+    </thead>
+    <tbody id="aTable">
+        @foreach (var x in Model)
+        {
+            <tr data-id="@x.Id">
+                <td>@x.Title</td>
+                <td>@x.Message</td>
+                <td>@x.PublishedAt.ToLocalTime().ToString("g")</td>
+                <td>@(x.IsActive ? "Oui" : "Non")</td>
+                <td class="text-end"><button class="btn btn-sm btn-outline-secondary a-toggle">Activer/Désactiver</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+          const aTitle = document.getElementById('aTitle');
+          const aMsg = document.getElementById('aMsg');
+          const aAdmin = document.getElementById('aAdmin');
+          const aCreate = document.getElementById('aCreate');
+          const aInfo = document.getElementById('aInfo');
+          const aTable = document.getElementById('aTable');
+
+          aCreate.addEventListener('click', async function(){
+            const fd = new FormData();
+            fd.append('title', (aTitle.value||'').trim());
+            fd.append('message', (aMsg.value||'').trim());
+            fd.append('adminCode', (aAdmin.value||'').trim().toUpperCase());
+            const r = await fetch('/Admin/CreateAnnouncement', { method:'POST', body: fd });
+            if(!r.ok){ aInfo.textContent = 'Erreur: ' + await r.text(); return; }
+            const d = await r.json();
+            if(d.ok){ location.reload(); }
+          });
+
+          aTable.addEventListener('click', async function(e){
+            const btn = e.target.closest('.a-toggle'); if(!btn) return;
+            const tr = btn.closest('tr'); const id = +tr.dataset.id;
+            const admin = prompt('Code admin:','AD-01'); if(!admin) return;
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('adminCode', admin.trim().toUpperCase());
+            const r = await fetch('/Admin/ToggleAnnouncement', { method:'POST', body: fd });
+            if(!r.ok){ alert('Erreur: ' + await r.text()); return; }
+            location.reload();
+          });
+        });
+    </script>
+}

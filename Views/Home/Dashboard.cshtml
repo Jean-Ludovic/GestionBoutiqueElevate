@@ -1,0 +1,50 @@
+﻿@model IEnumerable<GestionBoutiqueElevate.Models.Announcement>
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="d-flex flex-column gap-3">
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Orders" asp-action="Create">Créer une commande</a>
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Refunds" asp-action="Create">Effectuer un remboursement</a>
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Clients" asp-action="Create">Créer un client</a>
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Admin" asp-action="Orders">Voir les transactions</a>
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Admin" asp-action="Products">Voir les produits</a>
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Mail" asp-action="Compose">Envoyer un mail</a>
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Admin" asp-action="Products">Ajuster les stocks</a>
+                <a class="btn btn-outline-primary btn-lg w-100" asp-controller="Admin" asp-action="Announcements">Voir les promotions</a>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0">Promotions & messages</h5>
+                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="Announcements">Gérer</a>
+                    </div>
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var a in Model)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>@a.Title</strong>
+                                        <small class="text-muted">@a.PublishedAt.ToLocalTime().ToString("g")</small>
+                                    </div>
+                                    <div>@a.Message</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">Aucun message actif.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

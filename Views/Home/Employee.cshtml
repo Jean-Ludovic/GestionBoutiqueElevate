@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Dashboard Employé";
+}
+
+<style>
+    .grid { display:grid; gap:1rem; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); margin: 1.5rem 0; }
+    .card { border:1px solid rgba(0,0,0,.1); border-radius:14px; padding:1rem; background:#fff; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+    .card h3 { margin:.25rem 0 .5rem; font-size:1.15rem; }
+    .muted { color:#666; margin:0 0 1rem; }
+    .actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .btn { display:inline-block; padding:.6rem .9rem; border-radius:10px; border:1px solid #e2e2e2; text-decoration:none; }
+    .btn.primary { background:#111827; color:#fff; border-color:#111827; }
+    .btn.ghost { background:#fff; color:#111; }
+    .header { display:flex; align-items:baseline; justify-content:space-between; margin-top:1rem; }
+</style>
+
+<section class="header">
+    <h1>Dashboard Employé</h1>
+    <a class="btn ghost" href="/">← Retour Admin</a>
+</section>
+
+<div class="grid">
+    <article class="card">
+        <h3>Clients</h3>
+        <p class="muted">Créer un client et consulter la liste.</p>
+        <div class="actions">
+            <a class="btn primary" href="/Clients/Create">Nouveau client</a>
+            <a class="btn ghost" href="/Admin/Clients?readonly=1">Liste des clients</a>
+        </div>
+    </article>
+
+    <article class="card">
+        <h3>Commandes</h3>
+        <p class="muted">Créer une commande et consulter l’historique.</p>
+        <div class="actions">
+            <a class="btn primary" href="/Orders/Create">Nouvelle commande</a>
+            <a class="btn ghost" href="/Admin/Orders?readonly=1">Historique</a>
+        </div>
+    </article>
+
+    <article class="card">
+        <h3>Produits</h3>
+        <p class="muted">Consulter le catalogue (lecture seule).</p>
+        <div class="actions">
+            <a class="btn primary" href="/Admin/Products?readonly=1">Voir produits</a>
+        </div>
+    </article>
+
+    <article class="card">
+        <h3>Factures</h3>
+        <p class="muted">Télécharger les PDF depuis les commandes.</p>
+        <div class="actions">
+            <a class="btn primary" href="/Admin/Orders?readonly=1">Ouvrir une commande → Facture</a>
+        </div>
+    </article>
+</div>
